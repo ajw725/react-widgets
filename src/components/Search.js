@@ -3,7 +3,18 @@ import axios from 'axios';
 
 const Search = () => {
   const [searchTerm, setTerm] = useState('');
+  const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
   const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     const doSearch = async () => {
@@ -14,24 +25,18 @@ const Search = () => {
           list: 'search',
           format: 'json',
           origin: '*',
-          srsearch: searchTerm
+          srsearch: debouncedTerm
         }
       });
       setResults(resp.data.query.search);
     };
 
-    const timeoutId = setTimeout(() => {
-      if(searchTerm) {
-        doSearch();
-      } else {
-        setResults([]);
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [searchTerm]);
+    if(debouncedTerm) {
+      doSearch();
+    } else {
+      setResults([]);
+    }
+  }, [debouncedTerm]);
 
   const renderedResults = results.map(result => {
     return (
